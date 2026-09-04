@@ -4,7 +4,7 @@
 
 **`sfav` is a terminal command launcher for arbitrary shell commands.**
 
-It works similarly to [`ssfav`](https://github.com/...) — instead of managing SSH hosts, `sfav` lets you keep a list of frequently used shell commands in a TOML file and launch them from a fast, keyboard-driven terminal interface.
+It works similarly to [`sshs`](https://github.com/quantumsheep/sshs) — instead of managing SSH hosts, `sshs` lets you keep a list of frequently used shell commands in a TOML file and launch them from a fast, keyboard-driven terminal interface.
 
 Search your commands, select one, press **Enter**, and `sfav` hands it directly to your shell.
 
