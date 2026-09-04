@@ -84,3 +84,4 @@ warning printed to stderr instead of crashing.
   command to stdout instead of exec'ing it
 # sfav
 # sfav
+# sfav
