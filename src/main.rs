@@ -6,7 +6,10 @@ use std::{
 };
 
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind,
+        KeyModifiers, MouseEventKind,
+    },
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -48,10 +51,10 @@ struct ThemeConfig {
 impl Default for ThemeConfig {
     fn default() -> Self {
         Self {
-            border: "#b48cff".into(),
-            header: "#b48cff".into(),
-            highlight_bg: "#463764".into(),
-            highlight_fg: "#ffffff".into(),
+            border: "#60a5fa".into(),
+            header: "#06b6d4".into(),
+            highlight_bg: "#d4d4d8".into(),
+            highlight_fg: "#18181b".into(),
         }
     }
 }
@@ -276,33 +279,48 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> 
         terminal.draw(|f| ui(f, app))?;
 
         if event::poll(Duration::from_millis(200))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Release {
-                    continue;
-                }
-                if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)
-                {
-                    return Ok(Action::Quit);
-                }
-                match key.code {
-                    KeyCode::Esc => return Ok(Action::Quit),
-                    KeyCode::Enter => {
-                        if let Some(e) = app.selected_entry() {
-                            return Ok(Action::Run(e.command.clone()));
+            match event::read()? {
+                Event::Key(key) => {
+                    if key.kind == KeyEventKind::Release {
+                        continue;
+                    }
+                    if key.code == KeyCode::Char('c')
+                        && key.modifiers.contains(KeyModifiers::CONTROL)
+                    {
+                        return Ok(Action::Quit);
+                    }
+                    match key.code {
+                        KeyCode::Esc => return Ok(Action::Quit),
+                        KeyCode::Enter => {
+                            if let Some(e) = app.selected_entry() {
+                                return Ok(Action::Run(e.command.clone()));
+                            }
                         }
+                        KeyCode::Up => app.move_selection(-1),
+                        KeyCode::Down => app.move_selection(1),
+                        KeyCode::Backspace => {
+                            app.filter.pop();
+                            app.apply_filter();
+                        }
+                        KeyCode::Char(c) => {
+                            app.filter.push(c);
+                            app.apply_filter();
+                        }
+                        _ => {}
                     }
-                    KeyCode::Up => app.move_selection(-1),
-                    KeyCode::Down => app.move_selection(1),
-                    KeyCode::Backspace => {
-                        app.filter.pop();
-                        app.apply_filter();
-                    }
-                    KeyCode::Char(c) => {
-                        app.filter.push(c);
-                        app.apply_filter();
-                    }
-                    _ => {}
                 }
+                // One row per notch, both directions. Every other mouse
+                // event (clicks, drags, moves) is left alone — the
+                // terminal's synthetic click reporting isn't something we
+                // want to act on, and text selection still works via
+                // Shift+drag, which every terminal honors regardless of
+                // whether the app has mouse reporting on.
+                Event::Mouse(m) => match m.kind {
+                    MouseEventKind::ScrollDown => app.move_selection(1),
+                    MouseEventKind::ScrollUp => app.move_selection(-1),
+                    _ => {}
+                },
+                _ => {}
             }
         }
     }
@@ -314,9 +332,12 @@ fn run_command_and_wait(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
     command: &str,
 ) -> io::Result<()> {
-    set_alt_scroll_mode(true)?;
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     terminal.show_cursor()?;
 
     println!("$ {command}");
@@ -341,24 +362,13 @@ fn run_command_and_wait(
     }
 
     enable_raw_mode()?;
-    execute!(terminal.backend_mut(), EnterAlternateScreen)?;
-    set_alt_scroll_mode(false)?;
+    execute!(
+        terminal.backend_mut(),
+        EnterAlternateScreen,
+        EnableMouseCapture
+    )?;
     terminal.clear()?;
     Ok(())
-}
-
-/// xterm/kitty-family terminals translate mouse-wheel scrolls into
-/// synthetic Up/Down key presses while the alternate screen is active
-/// (DEC private mode 1007, "Alternate Scroll Mode") — a fallback for
-/// curses apps with no mouse support. That's what made scrolling jump the
-/// selection around unpredictably. We have no mouse handling at all, so
-/// disable it while our picker owns the alt screen, and restore the
-/// terminal's normal default whenever we hand control back (e.g. to run
-/// a command that might itself be a scrollable TUI app).
-fn set_alt_scroll_mode(enabled: bool) -> io::Result<()> {
-    let mut out = io::stdout();
-    write!(out, "\x1b[?1007{}", if enabled { 'h' } else { 'l' })?;
-    out.flush()
 }
 
 fn main() -> io::Result<()> {
@@ -378,8 +388,7 @@ fn main() -> io::Result<()> {
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
-    set_alt_scroll_mode(false)?;
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -395,9 +404,12 @@ fn main() -> io::Result<()> {
         }
     };
 
-    set_alt_scroll_mode(true)?;
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     terminal.show_cursor()?;
 
     outcome
