@@ -1,0 +1,30 @@
+# ~/.config/sfav/config.toml
+# sfav looks here by default, or pass a path as the first arg: `sfav ./myconfig.toml`
+
+# [theme] is optional — omit it entirely to get these defaults.
+# Colors are "#rrggbb" hex strings.
+[theme]
+border = "#b48cff"      
+header = "#b48cff"
+highlight_bg = "#463764"
+highlight_fg = "#ffffff"
+
+[[entries]]
+name = "update"
+command = "sudo dnf update -y"
+notes = "full system update"
+
+[[entries]]
+name = "rice reload"
+command = "hyprctl reload"
+notes = "reload hyprland config"
+
+[[entries]]
+name = "luna"
+command = "cd ~/piper && source ai-voice-venv/bin/activate && python main.py"
+notes = "launch AI voice assistant"
+
+[[entries]]
+name = "brightness up"
+command = "ddcutil setvcp 10 + 10"
+notes = "bump monitor brightness"
