@@ -17,6 +17,7 @@ if [ -f "$CONFIG_DIR/config.toml" ]; then
     echo "Existing config found at $CONFIG_DIR/config.toml, leaving it alone."
 else
     cp "$REPO_DIR/config.toml" "$CONFIG_DIR/config.toml"
+    chmod 600 "$CONFIG_DIR/config.toml"
     echo "Installed example config -> $CONFIG_DIR/config.toml"
 fi
 

@@ -6,7 +6,7 @@ use std::{
 };
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -58,14 +58,25 @@ impl Default for ThemeConfig {
 
 fn parse_hex_color(s: &str) -> Color {
     let s = s.trim().trim_start_matches('#');
-    let bytes = (0..3).map(|i| u8::from_str_radix(&s[i * 2..i * 2 + 2], 16));
-    match bytes.collect::<Result<Vec<u8>, _>>().as_deref() {
-        Ok([r, g, b]) => Color::Rgb(*r, *g, *b),
-        _ => {
-            eprintln!("sfav: couldn't parse color \"{s}\", falling back to white");
-            Color::White
-        }
-    }
+    // Length + is_ascii checks up front mean every subsequent byte slice
+    // is guaranteed in-bounds and on a char boundary — no panics on "",
+    // "#ab", or multi-byte input like "#aé".
+    let parsed = (s.len() == 6 && s.is_ascii())
+        .then(|| {
+            let r = u8::from_str_radix(&s[0..2], 16);
+            let g = u8::from_str_radix(&s[2..4], 16);
+            let b = u8::from_str_radix(&s[4..6], 16);
+            match (r, g, b) {
+                (Ok(r), Ok(g), Ok(b)) => Some(Color::Rgb(r, g, b)),
+                _ => None,
+            }
+        })
+        .flatten();
+
+    parsed.unwrap_or_else(|| {
+        eprintln!("sfav: couldn't parse color \"{s}\", falling back to white");
+        Color::White
+    })
 }
 
 /// Runtime colors, resolved once from ThemeConfig at startup.
@@ -98,8 +109,21 @@ impl Theme {
     }
 }
 
+fn print_help() {
+    println!(
+        "sfav — a minimal TUI launcher for shell commands\n\n\
+         Usage: sfav [CONFIG_PATH]\n\n\
+         CONFIG_PATH defaults to $XDG_CONFIG_HOME/sfav/config.toml, or\n\
+         ~/.config/sfav/config.toml if that's unset."
+    );
+}
+
 fn config_path() -> String {
     if let Some(arg) = env::args().nth(1) {
+        if arg == "-h" || arg == "--help" {
+            print_help();
+            std::process::exit(0);
+        }
         return arg;
     }
     if let Ok(xdg) = env::var("XDG_CONFIG_HOME") {
@@ -212,9 +236,9 @@ fn ui(f: &mut Frame, app: &mut App) {
         .map(|&idx| {
             let e = &app.entries[idx];
             Row::new(vec![
-                Cell::from(e.name.clone()),
-                Cell::from(e.command.clone()),
-                Cell::from(e.notes.clone()),
+                Cell::from(e.name.replace('\n', "; ")),
+                Cell::from(e.command.replace('\n', "; ")),
+                Cell::from(e.notes.replace('\n', "; ")),
             ])
         })
         .collect();
@@ -253,6 +277,13 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> 
 
         if event::poll(Duration::from_millis(200))? {
             if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Release {
+                    continue;
+                }
+                if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)
+                {
+                    return Ok(Action::Quit);
+                }
                 match key.code {
                     KeyCode::Esc => return Ok(Action::Quit),
                     KeyCode::Enter => {
@@ -284,30 +315,32 @@ fn run_command_and_wait(
     command: &str,
 ) -> io::Result<()> {
     disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
     println!("$ {command}");
     let shell = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
     let status = Command::new(&shell).arg("-c").arg(command).status();
-    match status {
-        Ok(s) => println!("\n[shs] exited: {s} \u{2014} press enter to return"),
-        Err(e) => println!("\n[shs] failed to run: {e} \u{2014} press enter to return"),
+
+    // Only make the user press enter if something went wrong — on a clean
+    // exit, drop straight back into the picker.
+    let needs_pause = match &status {
+        Ok(s) => !s.success(),
+        Err(_) => true,
+    };
+    match &status {
+        Ok(s) if needs_pause => println!("\n[sfav] exited: {s} \u{2014} press enter to return"),
+        Err(e) => println!("\n[sfav] failed to run: {e} \u{2014} press enter to return"),
+        _ => {}
     }
-    io::stdout().flush()?;
-    let mut discard = String::new();
-    io::stdin().read_line(&mut discard)?;
+    if needs_pause {
+        io::stdout().flush()?;
+        let mut discard = String::new();
+        io::stdin().read_line(&mut discard)?;
+    }
 
     enable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        EnterAlternateScreen,
-        EnableMouseCapture
-    )?;
+    execute!(terminal.backend_mut(), EnterAlternateScreen)?;
     terminal.clear()?;
     Ok(())
 }
@@ -317,9 +350,19 @@ fn main() -> io::Result<()> {
     let theme = Theme::from_config(&cfg.theme);
     let mut app = App::new(cfg.entries, theme);
 
+    // If anything panics while the TUI is up, restore the terminal first —
+    // otherwise a panic leaves the terminal stuck in raw/alternate-screen
+    // mode until the user blindly types `reset`.
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let _ = disable_raw_mode();
+        let _ = execute!(io::stdout(), LeaveAlternateScreen);
+        default_hook(info);
+    }));
+
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -336,11 +379,7 @@ fn main() -> io::Result<()> {
     };
 
     disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
     outcome
