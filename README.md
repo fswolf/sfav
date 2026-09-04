@@ -83,3 +83,4 @@ warning printed to stderr instead of crashing.
 - Waybar/rofi mode: `--dmenu`-style flag that just prints the chosen
   command to stdout instead of exec'ing it
 # sfav
+# sfav
