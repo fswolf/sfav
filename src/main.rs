@@ -314,6 +314,7 @@ fn run_command_and_wait(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
     command: &str,
 ) -> io::Result<()> {
+    set_alt_scroll_mode(true)?;
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
@@ -341,8 +342,23 @@ fn run_command_and_wait(
 
     enable_raw_mode()?;
     execute!(terminal.backend_mut(), EnterAlternateScreen)?;
+    set_alt_scroll_mode(false)?;
     terminal.clear()?;
     Ok(())
+}
+
+/// xterm/kitty-family terminals translate mouse-wheel scrolls into
+/// synthetic Up/Down key presses while the alternate screen is active
+/// (DEC private mode 1007, "Alternate Scroll Mode") — a fallback for
+/// curses apps with no mouse support. That's what made scrolling jump the
+/// selection around unpredictably. We have no mouse handling at all, so
+/// disable it while our picker owns the alt screen, and restore the
+/// terminal's normal default whenever we hand control back (e.g. to run
+/// a command that might itself be a scrollable TUI app).
+fn set_alt_scroll_mode(enabled: bool) -> io::Result<()> {
+    let mut out = io::stdout();
+    write!(out, "\x1b[?1007{}", if enabled { 'h' } else { 'l' })?;
+    out.flush()
 }
 
 fn main() -> io::Result<()> {
@@ -363,6 +379,7 @@ fn main() -> io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
+    set_alt_scroll_mode(false)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -378,6 +395,7 @@ fn main() -> io::Result<()> {
         }
     };
 
+    set_alt_scroll_mode(true)?;
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
