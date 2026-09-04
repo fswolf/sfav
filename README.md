@@ -10,7 +10,7 @@ It works similarly to [`sshs`](https://github.com/quantumsheep/sshs), instead of
 
 Search your commands, select one, press **Enter**, and `sfav` hands it directly to your shell.
 
-No wrapper shell. No extra process sitting around. When the command exits, you're back at your normal prompt.
+No wrapper shell. No extra process sitting around. No hidden bash alianses. 
 
 ---
 
