@@ -55,8 +55,8 @@ impl Default for ThemeConfig {
         Self {
             border: "#60a5fa".into(),
             header: "#06b6d4".into(),
-            highlight_bg: "#d4d4d8".into(),
-            highlight_fg: "#18181b".into(),
+            highlight_bg: "#334155".into(),
+            highlight_fg: "#ffffff".into(),
         }
     }
 }
@@ -117,7 +117,9 @@ impl Theme {
 fn print_help() {
     println!(
         "sfav — a minimal TUI launcher for shell commands\n\n\
-         Usage: sfav [CONFIG_PATH]\n\n\
+         Usage: sfav [CONFIG_PATH]\n\
+                sfav --version | -v\n\
+                sfav --help | -h\n\n\
          CONFIG_PATH defaults to $XDG_CONFIG_HOME/sfav/config.toml, or\n\
          ~/.config/sfav/config.toml if that's unset."
     );
@@ -127,6 +129,10 @@ fn config_path() -> String {
     if let Some(arg) = env::args().nth(1) {
         if arg == "-h" || arg == "--help" {
             print_help();
+            std::process::exit(0);
+        }
+        if arg == "-v" || arg == "--version" {
+            println!("sfav {}", env!("CARGO_PKG_VERSION"));
             std::process::exit(0);
         }
         return arg;
