@@ -82,7 +82,3 @@ warning printed to stderr instead of crashing.
   one, for commands you want to watch while keeping the picker open
 - Waybar/rofi mode: `--dmenu`-style flag that just prints the chosen
   command to stdout instead of exec'ing it
-# sfav
-# sfav
-# sfav
-# sfav
