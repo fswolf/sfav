@@ -244,7 +244,7 @@ docker
 will find entries containing `docker` anywhere in those fields.
 
 ---
-
+ 
 ## 🔨 Building from source
 
 `sfav` is written in Rust.
