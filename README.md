@@ -27,7 +27,7 @@ No wrapper shell. No extra process sitting around. When the command exits, you'r
 
 ---
 
-## 📸 What it does
+## What it does
 
 Instead of remembering commands like:
 
