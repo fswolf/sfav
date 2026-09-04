@@ -1,5 +1,7 @@
 # sfav
 
+![alt text](image.png)
+
 **`sfav` is a terminal command launcher for arbitrary shell commands.**
 
 It works similarly to [`ssfav`](https://github.com/...) — instead of managing SSH hosts, `sfav` lets you keep a list of frequently used shell commands in a TOML file and launch them from a fast, keyboard-driven terminal interface.
