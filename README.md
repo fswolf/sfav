@@ -1,8 +1,8 @@
 # sfav
 
-![alt text](image-1.png)
+![alt text](image.png)
 
-![alt text](image-2.png)
+![alt text](image-1.png)
 
 **`sfav` is a terminal command launcher for arbitrary shell commands.**
 
@@ -230,7 +230,7 @@ If an invalid color is supplied, `sfav` falls back to white and prints a warning
 | --------- | ------------------------ |
 | `↑` / `↓` | Move selection           |
 | `Enter`   | Execute selected command |
-| `N`       | View notes for command   |
+| `Tab`     | View notes for command   |
 | `Esc`     | Quit                     |
 | Typing    | Filter commands          |
 

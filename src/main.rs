@@ -55,8 +55,8 @@ impl Default for ThemeConfig {
         Self {
             border: "#60a5fa".into(),
             header: "#06b6d4".into(),
-            highlight_bg: "#334155".into(),
-            highlight_fg: "#ffffff".into(),
+            highlight_bg: "#d4d4d8".into(),
+            highlight_fg: "#18181b".into(),
         }
     }
 }
@@ -259,7 +259,7 @@ fn ui(f: &mut Frame, app: &mut App) {
     f.render_stateful_widget(table, chunks[1], &mut app.table_state);
 
     let footer = Paragraph::new(Line::from(vec![Span::raw(
-        "(Esc) quit | (\u{2191}) up | (\u{2193}) down | (enter) run | (n) notes",
+        "(Esc) quit | (\u{2191}) up | (\u{2193}) down | (enter) run | (tab) notes",
     )]))
     .alignment(Alignment::Center)
     .block(theme.block());
@@ -273,7 +273,7 @@ fn ui(f: &mut Frame, app: &mut App) {
             } else {
                 e.notes.clone()
             };
-            let popup = Paragraph::new(format!("{notes}\n\n(Esc or n to close)"))
+            let popup = Paragraph::new(format!("{notes}\n\n(Esc or tab to close)"))
                 .wrap(Wrap { trim: false })
                 .block(theme.block().title(format!(" {} ", e.name)));
             f.render_widget(Clear, area);
@@ -324,7 +324,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> 
                     }
                     if app.show_notes {
                         match key.code {
-                            KeyCode::Esc | KeyCode::Char('n') => app.show_notes = false,
+                            KeyCode::Esc | KeyCode::Tab => app.show_notes = false,
                             _ => {}
                         }
                         continue;
@@ -342,7 +342,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> 
                             app.filter.pop();
                             app.apply_filter();
                         }
-                        KeyCode::Char('n') => app.show_notes = true,
+                        KeyCode::Tab => app.show_notes = true,
                         KeyCode::Char(c) => {
                             app.filter.push(c);
                             app.apply_filter();
