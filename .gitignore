@@ -6,3 +6,4 @@
 *.tar.xz
 package.sh
 sfav.spec
+COPR-SETUP.md
