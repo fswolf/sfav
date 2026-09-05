@@ -1,5 +1,5 @@
 Name:           sfav
-Version:        0.2.0
+Version:        0.9.2
 Release:        1%{?dist}
 Summary:        A minimal TUI launcher for shell commands and scripts
 
@@ -44,5 +44,5 @@ install -Dm644 config.toml %{buildroot}%{_datadir}/%{name}/config.toml
 %{_datadir}/%{name}/config.toml
 
 %changelog
-* Thu Sep 03 2026 fswolf - 0.2.0-1
+* Thu Sep 03 2026 fswolf - 0.9.2-1
 - Initial package
