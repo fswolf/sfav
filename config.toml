@@ -4,10 +4,10 @@
 # [theme] is optional — omit it entirely to get these defaults.
 # Colors are "#rrggbb" hex strings.
 [theme]
-border = "#b48cff"      
-header = "#b48cff"
-highlight_bg = "#463764"
-highlight_fg = "#ffffff"
+border = "#60a5fa"  
+header = "#06b6d4"
+highlight_bg = "#d4d4d8"
+highlight_fg = "#18181b"
 
 [[entries]]
 name = "update"
