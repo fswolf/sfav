@@ -81,7 +81,10 @@ sudo dnf copr enable fswolf/sfav
 sudo dnf install sfav
 ```
 
-The easiest way to install `sfav` is with the included installer:
+### Automatic installation
+
+If you're not using Fedora, or prefer to build from source, the included
+installer will build and install sfav for you:
 
 ```bash
 ./install.sh
