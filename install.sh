@@ -4,8 +4,10 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sfav"
+VERSION="$(grep -m1 '^version' "$REPO_DIR/Cargo.toml" | sed -E 's/version = "(.*)"/\1/')"
 
-echo "Building sfav (release)..."
+echo "Building from: $REPO_DIR (version $VERSION)"
+echo "If that path or version looks wrong, you're running the wrong copy of this repo."
 cargo build --release --manifest-path "$REPO_DIR/Cargo.toml"
 
 mkdir -p "$BIN_DIR"
