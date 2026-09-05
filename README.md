@@ -71,7 +71,15 @@ Type to search, select a command, and press **Enter**.
 
 ## 📦 Installation
 
-### Automatic installation
+### Fedora / COPR
+
+If you're running Fedora, the easiest way to install `sfav` is through the
+Fedora COPR repository:
+
+```bash
+sudo dnf copr enable fswolf/sfav
+sudo dnf install sfav
+```
 
 The easiest way to install `sfav` is with the included installer:
 
