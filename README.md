@@ -189,8 +189,6 @@ and other shell syntax supported by your shell.
 
 Because `sfav` replaces itself with the command process, the command runs directly in your terminal rather than inside a persistent launcher shell.
 
-When the command finishes, you're returned directly to your normal shell prompt.
-
 > **Note:** Shell aliases and functions depend on how your shell is configured and whether they are available when the command is invoked.
 
 ---
