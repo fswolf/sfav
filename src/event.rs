@@ -44,6 +44,8 @@ pub fn run_app(
                     if app.show_notes {
                         match key.code {
                             KeyCode::Esc | KeyCode::Tab => app.show_notes = false,
+                            KeyCode::Up => app.move_selection(-1),
+                            KeyCode::Down => app.move_selection(1),
                             _ => {}
                         }
                         continue;
