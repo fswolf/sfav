@@ -293,6 +293,14 @@ The project has been compiled and smoke-tested in an Ubuntu 24.04 environment.
 
 ---
 
+## 💖 Support
+
+If `sfav` saves you some typing, you can sponsor its development:
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-fswolf-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/fswolf)
+
+---
+
 ## 📄 License
 
 See [LICENSE](LICENSE) for details.
